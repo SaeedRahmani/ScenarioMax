@@ -95,6 +95,16 @@ python scenariomax/convert_dataset.py \
   --tfrecord_name training
 ```
 
+### Converting the nuPlan Dataset
+```bash
+python scenariomax/convert_dataset.py \                                   
+  --nuplan_src /path/to/data \
+  --dst /path/to/output \
+  --target_format tfexample \
+  --num_workers 8 \
+  --tfrecord_name mini
+```
+
 ### Converting to GPUDrive Format
 
 ```bash
