@@ -18,7 +18,8 @@ dependencies = [
     "scipy",
     "trimesh",
     "python-fcl",
-    "tensorflow==2.11.1",
+    "tensorflow-macos",
+    # "tensorflow==2.11.1",
 ]
 
 [project.optional-dependencies]

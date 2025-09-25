@@ -14,10 +14,14 @@ from nuplan.planning.script.builders.scenario_building_builder import build_scen
 from nuplan.planning.script.builders.scenario_filter_builder import build_scenario_filter
 from nuplan.planning.script.utils import set_up_common_builder
 
+from scenariomax import logger_utils
+
 
 NuPlanEgoType = TrackedObjectType.EGO
 
 NUPLAN_PACKAGE_PATH = os.path.dirname(nuplan.__file__)
+
+logger = logger_utils.get_logger(__name__)
 
 
 def get_nuplan_scenarios(
@@ -26,6 +30,8 @@ def get_nuplan_scenarios(
     num_files: int | None = None,
     logs: list | None = None,
     builder="nuplan_mini",
+    scenario_duration: float = 15.0,
+    direct_from_logs: bool = False,
 ) -> list[NuPlanScenario]:
     """Gets NuPlan scenarios based on provided parameters.
 
@@ -38,6 +44,8 @@ def get_nuplan_scenarios(
         logs: A list of logs, like ['2021.07.16.20.45.29_veh-35_01095_01486'].
             If None, loads all files in data_root.
         builder: Builder file name, defaults to "nuplan_mini".
+        scenario_duration: Duration of scenarios in seconds (default: 15.0).
+        direct_from_logs: Use direct scene parsing instead of scenario builder.
 
     Returns:
         A collection of NuPlan scenario objects.
@@ -71,11 +79,20 @@ def get_nuplan_scenarios(
         # "scenario_filter.num_scenarios_per_type=1",
         # "scenario_filter.expand_scenarios=true",
         # "scenario_filter.limit_scenarios_per_type=10",  # use 10 scenarios per scenario type
-        "scenario_filter.timestamp_threshold_s=10",  # minial scenario duration (s)
+        f"scenario_filter.timestamp_threshold_s={max(scenario_duration, 10.0)}",  # minimal scenario duration
     ]
 
     if num_files is not None:
         dataset_parameters.append(f"scenario_filter.limit_total_scenarios={num_files}")
+
+    # Choose loading method based on direct_from_logs parameter or custom duration
+    # If custom scenario duration is specified (not default 15.0), use direct loading for better control
+    use_direct_loading = direct_from_logs or (scenario_duration != 15.0)
+    
+    if use_direct_loading:
+        if scenario_duration != 15.0:
+            logger.info(f"🔧 Using direct scene loading for custom scenario duration: {scenario_duration}s")
+        return get_nuplan_scenarios_by_scene(data_path, maps_path, num_files, logs, scenario_duration)
 
     base_config_path = os.path.join(nuplan_package_path, "planning", "script")
     simulation_hydra_paths = construct_simulation_hydra_paths(base_config_path)
@@ -152,6 +169,7 @@ def get_nuplan_scenarios_by_scene(
     maps_path: str,
     num_files: int | None = None,
     logs: list | None = None,
+    scenario_duration: float = 15.0,
 ) -> list[NuPlanScenario]:
     """Gets NuPlan scenarios by directly parsing scenes from logs.
     Does not use the scenario builder
@@ -161,6 +179,7 @@ def get_nuplan_scenarios_by_scene(
         num_files: Maximum number of scenarios to retrieve. If None, retrieves all.
         logs: A list of logs, like ['2021.07.16.20.45.29_veh-35_01095_01486'].
             If None, loads all files in data_root.
+        scenario_duration: Duration of scenarios in seconds (default: 15.0).
     Returns:
         A collection of NuPlan scenario objects.
     """
@@ -180,10 +199,12 @@ def get_nuplan_scenarios_by_scene(
             last_frame = tokens[-1]
             scene_duration = (last_frame.timestamp - first_frame.timestamp) / 1_000_000
 
-            if scene_duration < 19.0:  # What should we use?
+            # Use minimum of actual scene duration and requested scenario duration
+            if scene_duration < scenario_duration:
                 continue
 
-            extraction_info = ScenarioExtractionInfo(scenario_duration=scene_duration, subsample_ratio=0.5)
+            # Use the parameterized scenario duration instead of hardcoded value
+            extraction_info = ScenarioExtractionInfo(scenario_duration=scenario_duration, subsample_ratio=0.5)
             scenarios.append(
                 NuPlanScenario(
                     data_root=data_path,

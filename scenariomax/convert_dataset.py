@@ -90,6 +90,12 @@ def create_argument_parser():
         action="store_true",
         help="Parse nuPlan scenes directly from logs (alternative method)",
     )
+    parser.add_argument(
+        "--nuplan_scenario_duration",
+        type=float,
+        default=15.0,
+        help="Duration of nuPlan scenarios in seconds (default: 15.0 for ~150 frames)",
+    )
 
     # Logging
     parser.add_argument(
@@ -159,6 +165,7 @@ def main():
         shard=args.shard,
         openscenes_metadata_src=args.openscenes_metadata_src,
         nuplan_direct_from_logs=args.nuplan_direct_from_logs,
+        nuplan_scenario_duration=args.nuplan_scenario_duration,
     )
     if stats:
         logger.info(f"✅ Conversion completed successfully: {stats}")

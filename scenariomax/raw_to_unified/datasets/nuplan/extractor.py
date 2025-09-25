@@ -205,7 +205,7 @@ def extract_dynamic_map_elements(nuplan_scenario: NuPlanScenario, center: list[f
 
     for i in range(episode_len):
         traffic_lights = nuplan_scenario.get_traffic_light_status_at_iteration(i)
-        frame_data = {str(tl.lane_connector_id): tl.status for tl in traffic_lights}
+        frame_data = {tl.lane_connector_id: tl.status for tl in traffic_lights} # Store lane_id as integer
         traffic_light_frames.append(frame_data)
         all_lane_connectors.update(frame_data.keys())
 

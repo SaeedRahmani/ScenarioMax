@@ -466,6 +466,8 @@ def _load_raw_scenarios(dataset_name: str, dataset_path: str, **kwargs) -> tuple
     elif dataset_name == "nuplan":
         load_args["maps_path"] = os.getenv("NUPLAN_MAPS_ROOT")
         load_args["num_files"] = kwargs.get("num_files")
+        load_args["scenario_duration"] = kwargs.get("nuplan_scenario_duration", 15.0)
+        load_args["direct_from_logs"] = kwargs.get("nuplan_direct_from_logs", False)
     elif dataset_name == "openscenes":
         load_args.update(
             {
