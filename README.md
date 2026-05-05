@@ -270,6 +270,7 @@ Raw Data → Unified Format → Target Format
 
 - [Architecture Documentation](docs/ARCHITECTURE.md)
 - [API Reference](docs/API.md)
+- [nuPlan → GPUDrive Tutorial](docs/nuplan_to_gpudrive.md)
 
 
 ## 📄 License
